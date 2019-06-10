@@ -39,6 +39,7 @@ class StageRecorder {
         if (this.stopped) return;
         this.stopped = true;
         this.recorder.stop();
+        this.vm.postIOData('video', {forceTransparentPreview: false});
         return new Blob(this.chunks, {type: 'video/webm'})
     }
 }

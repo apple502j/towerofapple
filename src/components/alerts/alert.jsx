@@ -27,8 +27,10 @@ const AlertComponent = ({
     onCloseAlert,
     onDownload,
     onSaveNow,
+    onStopRecording,
     onReconnect,
-    showReconnect
+    showReconnect,
+    showStopRecording
 }) => (
     <Box
         className={classNames(styles.alert, styles[level])}
@@ -101,6 +103,18 @@ const AlertComponent = ({
                     />
                 </button>
             )}
+            {showStopRecording && (
+                <button
+                    className={styles.alertConnectionButton}
+                    onClick={onStopRecording}
+                >
+                    <FormattedMessage
+                        defaultMessage="Stop Recording"
+                        description="Button to stop recording the stage"
+                        id="gui.alerts.stopRecording"
+                    />
+                </button>
+            )}
             {closeButton && (
                 <Box
                     className={styles.alertCloseButtonContainer}
@@ -128,9 +142,11 @@ AlertComponent.propTypes = {
     onDownload: PropTypes.func,
     onReconnect: PropTypes.func,
     onSaveNow: PropTypes.func,
+    onStopRecording: PropTypes.func,
     showDownload: PropTypes.func,
     showReconnect: PropTypes.bool,
-    showSaveNow: PropTypes.bool
+    showSaveNow: PropTypes.bool,
+    showStopRecording: PropTypes.bool
 };
 
 AlertComponent.defaultProps = {

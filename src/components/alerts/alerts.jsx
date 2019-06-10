@@ -31,6 +31,7 @@ const AlertsComponent = ({
                     showDownload={a.showDownload}
                     showReconnect={a.showReconnect}
                     showSaveNow={a.showSaveNow}
+                    showStopRecording={a.showStopRecording}
                     onCloseAlert={onCloseAlert}
                 />
             ))}

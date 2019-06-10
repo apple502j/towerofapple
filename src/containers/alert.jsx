@@ -36,7 +36,8 @@ class Alert extends React.Component {
             onSaveNow,
             showDownload,
             showReconnect,
-            showSaveNow
+            showSaveNow,
+            showStopRecording
         } = this.props;
         return (
             <SB3Downloader>{(_, downloadProject) => (
@@ -51,10 +52,12 @@ class Alert extends React.Component {
                     showDownload={showDownload}
                     showReconnect={showReconnect}
                     showSaveNow={showSaveNow}
+                    showStopRecording={showStopRecording}
                     onCloseAlert={this.handleOnCloseAlert}
                     onDownload={downloadProject}
                     onReconnect={this.handleOnReconnect}
                     onSaveNow={onSaveNow}
+                    onStopRecording={onStopRecording}
                 />
             )}</SB3Downloader>
         );
@@ -86,9 +89,11 @@ Alert.propTypes = {
     onCloseAlert: PropTypes.func.isRequired,
     onOpenConnectionModal: PropTypes.func,
     onSaveNow: PropTypes.func,
+    onStopRecording: PropTypes.func,
     showDownload: PropTypes.bool,
     showReconnect: PropTypes.bool,
-    showSaveNow: PropTypes.bool
+    showSaveNow: PropTypes.bool,
+    showStopRecording: PropTypes.bool
 };
 
 export default connect(
