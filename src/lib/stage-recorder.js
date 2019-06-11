@@ -9,21 +9,48 @@ class StageRecorder {
         /*
             supposed params for options:
             - noCamera: if true it hides the video motion camera when it starts recording
+            - addSound: if true sound will be added
         */
         const vm = this.vm;
         const canvas = vm.renderer && vm.renderer.canvas;
 
         if (!canvas) throw new Error("Canvas not ready");
-        if (!window.MediaRecorder) throw new Error("MediaRecorder is not available; maybe Edge?");
-        if (!MediaRecorder.isTypeSupported("video/webm")) throw new Error("WebM format not supported;")
+        if (!window.MediaRecorder) throw new Error("MediaRecorder is not available");
+        if (!MediaRecorder.isTypeSupported("video/webm")) throw new Error("WebM format is not supported")
         const fps = vm.runtime.turboMode ? 60 : 30;
 
         const newOptions = Object.assign({
-            noCamera: true
+            noCamera: true,
+            addSound: true
         }, options)
         if (newOptions.noCamera) vm.postIOData('video', {forceTransparentPreview: true});
-        const stream = canvas.captureStream(fps);
-        const recorder = this.recorder = new MediaRecorder(stream, {mimeType: 'video/webm'});
+
+        let recordStream = canvas.captureStream(fps);
+
+        let audioStream;
+        if (newOptions.addSound) {
+            const audio = vm.runtime.audioEngine;
+            const context = audio.audioContext;
+            const node = audio.inputNode;
+
+            const destination = context.createMediaStreamDestination();
+            node.connect(destination);
+
+            // Without it blank will be cut
+            const oscillator = context.createOscillator();
+            oscillator.connect(destination);
+
+            const audioStream = destination.stream;
+
+            // Bad practice but shorter
+            const stageStream = recordStream;
+            recordStream = new MediaStream();
+            for (stream of [stageStream, audioStream]) {
+                stream.getTracks().forEach(track => recordStream.addTrack(track));
+            }
+        }
+
+        const recorder = this.recorder = new MediaRecorder(recordStream, {mimeType: 'video/webm'});
         this.chunks = [];
         recorder.ondataavailable = this.handleDataAvailable;
         recorder.start();
