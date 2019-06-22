@@ -212,6 +212,20 @@ const alerts = [
         ),
         iconSpinner: true,
         level: AlertLevels.SUCCESS
+    },
+    {
+        alertId: 'recordingStage',
+        alertType: AlertTypes.STANDARD,
+        clearList: [],
+        content: (
+            <FormattedMessage
+                defaultMessage="Recording stage..."
+                description="Message indicating that stage is in process of recording"
+                id="gui.alerts.recording"
+            />
+        ),
+        iconSpinner: true,
+        level: AlertLevels.SUCCESS
     }
 ];
 

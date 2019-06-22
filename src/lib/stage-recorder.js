@@ -14,21 +14,20 @@ class StageRecorder {
         const vm = this.vm;
         const canvas = vm.renderer && vm.renderer.canvas;
 
-        if (!canvas) throw new Error("Canvas not ready");
-        if (!window.MediaRecorder) throw new Error("MediaRecorder is not available");
-        if (!MediaRecorder.isTypeSupported("video/webm")) throw new Error("WebM format is not supported")
+        if (!canvas) throw new Error('Canvas not ready');
+        if (!window.MediaRecorder) throw new Error('MediaRecorder is not available');
+        if (!MediaRecorder.isTypeSupported('video/webm')) throw new Error('WebM format is not supported');
         const fps = vm.runtime.turboMode ? 60 : 30;
 
         const newOptions = Object.assign({
             noCamera: true,
             addSound: true
-        }, options)
+        }, options);
         if (newOptions.noCamera) vm.postIOData('video', {forceTransparentPreview: true});
 
         let recordStream = canvas.captureStream(fps);
 
-        let audioStream;
-        if (newOptions.addSound) {
+        if (newOptions.addSound && vm.runtime.audioEngine) {
             const audio = vm.runtime.audioEngine;
             const context = audio.audioContext;
             const node = audio.inputNode;
@@ -45,7 +44,7 @@ class StageRecorder {
             // Bad practice but shorter
             const stageStream = recordStream;
             recordStream = new MediaStream();
-            for (stream of [stageStream, audioStream]) {
+            for (const stream of [stageStream, audioStream]) {
                 stream.getTracks().forEach(track => recordStream.addTrack(track));
             }
         }
@@ -67,6 +66,8 @@ class StageRecorder {
         this.stopped = true;
         this.recorder.stop();
         this.vm.postIOData('video', {forceTransparentPreview: false});
-        return new Blob(this.chunks, {type: 'video/webm'})
+        this.vm.runtime.emit('RECORDING_FINISHED', Blob(this.chunks, {type: 'video/webm'}));
     }
 }
+
+export default StageRecorder;

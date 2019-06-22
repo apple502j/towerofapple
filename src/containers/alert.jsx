@@ -2,6 +2,7 @@ import React from 'react';
 import bindAll from 'lodash.bindall';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
+import VM from 'scratch-vm';
 import SB3Downloader from './sb3-downloader.jsx';
 import AlertComponent from '../components/alerts/alert.jsx';
 import {openConnectionModal} from '../reducers/modals';
@@ -13,7 +14,8 @@ class Alert extends React.Component {
         super(props);
         bindAll(this, [
             'handleOnCloseAlert',
-            'handleOnReconnect'
+            'handleOnReconnect',
+            'handleStopRecording'
         ]);
     }
     handleOnCloseAlert () {
@@ -22,6 +24,10 @@ class Alert extends React.Component {
     handleOnReconnect () {
         this.props.onOpenConnectionModal(this.props.extensionId);
         this.handleOnCloseAlert();
+    }
+    handleStopRecording () {
+        this.props.vm.runtime.emit('RECORDING_FINISHED');
+        this.props.onCloseAlert(this.props.index);
     }
     render () {
         const {
@@ -57,14 +63,16 @@ class Alert extends React.Component {
                     onDownload={downloadProject}
                     onReconnect={this.handleOnReconnect}
                     onSaveNow={onSaveNow}
-                    onStopRecording={onStopRecording}
+                    onStopRecording={this.handleStopRecording}
                 />
             )}</SB3Downloader>
         );
     }
 }
 
-const mapStateToProps = () => ({});
+const mapStateToProps = state => Object.assign({
+        vm: state.scratchGui.vm
+});
 
 const mapDispatchToProps = dispatch => ({
     onOpenConnectionModal: id => {
@@ -93,7 +101,8 @@ Alert.propTypes = {
     showDownload: PropTypes.bool,
     showReconnect: PropTypes.bool,
     showSaveNow: PropTypes.bool,
-    showStopRecording: PropTypes.bool
+    showStopRecording: PropTypes.bool,
+    vm: PropTypes.instanceOf(VM)
 };
 
 export default connect(

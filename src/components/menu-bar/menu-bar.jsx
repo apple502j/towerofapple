@@ -28,6 +28,7 @@ import LoginDropdown from './login-dropdown.jsx';
 import SB3Downloader from '../../containers/sb3-downloader.jsx';
 import DeletionRestorer from '../../containers/deletion-restorer.jsx';
 import TurboMode from '../../containers/turbo-mode.jsx';
+import RecordStage from '../../containers/record-stage.jsx';
 import MenuBarHOC from '../../containers/menu-bar-hoc.jsx';
 
 import {openTipsLibrary} from '../../reducers/modals';
@@ -56,7 +57,10 @@ import {
     languageMenuOpen,
     openLoginMenu,
     closeLoginMenu,
-    loginMenuOpen
+    loginMenuOpen,
+    openRecordModal,
+    closeRecordModal,
+    recordModalOpen
 } from '../../reducers/menus';
 
 import collectMetadata from '../../lib/collect-metadata';
@@ -155,7 +159,8 @@ class MenuBar extends React.Component {
             'handleLanguageMouseUp',
             'handleRestoreOption',
             'handleSaveToComputer',
-            'restoreOptionMessage'
+            'restoreOptionMessage',
+            'handleRecordStage'
         ]);
     }
     componentDidMount () {
@@ -217,6 +222,10 @@ class MenuBar extends React.Component {
             restoreFun();
             this.props.onRequestCloseEdit();
         };
+    }
+    handleRecordStage () {
+        this.props.onOpenRecordModal();
+        this.props.onRequestCloseEdit();
     }
     handleKeyPress (event) {
         const modifier = bowser.mac ? event.metaKey : event.ctrlKey;
@@ -312,339 +321,279 @@ class MenuBar extends React.Component {
             </Button>
         );
         return (
-            <Box
-                className={classNames(
-                    this.props.className,
-                    styles.menuBar
-                )}
-            >
-                <div className={styles.mainMenu}>
-                    <div className={styles.fileGroup}>
-                        <div className={classNames(styles.menuBarItem)}>
-                            <img
-                                alt="Scratch"
-                                className={classNames(styles.scratchLogo, {
-                                    [styles.clickable]: typeof this.props.onClickLogo !== 'undefined'
-                                })}
-                                draggable={false}
-                                src={scratchLogo}
-                                onClick={this.props.onClickLogo}
-                            />
-                        </div>
-                        <div
-                            className={classNames(styles.menuBarItem, styles.hoverable, styles.languageMenu)}
-                        >
-                            <div>
+            <React.Fragment>
+                <Box
+                    className={classNames(
+                        this.props.className,
+                        styles.menuBar
+                    )}
+                >
+                    <div className={styles.mainMenu}>
+                        <div className={styles.fileGroup}>
+                            <div className={classNames(styles.menuBarItem)}>
                                 <img
-                                    className={styles.languageIcon}
-                                    src={languageIcon}
-                                />
-                                <img
-                                    className={styles.languageCaret}
-                                    src={dropdownCaret}
+                                    alt="Scratch"
+                                    className={classNames(styles.scratchLogo, {
+                                        [styles.clickable]: typeof this.props.onClickLogo !== 'undefined'
+                                    })}
+                                    draggable={false}
+                                    src={scratchLogo}
+                                    onClick={this.props.onClickLogo}
                                 />
                             </div>
-                            <LanguageSelector label={this.props.intl.formatMessage(ariaMessages.language)} />
-                        </div>
-                        <div
-                            className={classNames(styles.menuBarItem, styles.hoverable, {
-                                [styles.active]: this.props.fileMenuOpen
-                            })}
-                            onMouseUp={this.props.onClickFile}
-                        >
-                            <FormattedMessage
-                                defaultMessage="File"
-                                description="Text for file dropdown menu"
-                                id="gui.menuBar.file"
-                            />
-                            <MenuBarMenu
-                                className={classNames(styles.menuBarMenu)}
-                                open={this.props.fileMenuOpen}
-                                place={this.props.isRtl ? 'left' : 'right'}
-                                onRequestClose={this.props.onRequestCloseFile}
+                            <div
+                                className={classNames(styles.menuBarItem, styles.hoverable, styles.languageMenu)}
                             >
-                                <MenuSection>
-                                    <MenuItem
-                                        isRtl={this.props.isRtl}
-                                        onClick={this.handleClickNew}
-                                    >
-                                        {newProjectMessage}
-                                    </MenuItem>
-                                </MenuSection>
-                                {(this.props.canSave || this.props.canCreateCopy || this.props.canRemix) && (
+                                <div>
+                                    <img
+                                        className={styles.languageIcon}
+                                        src={languageIcon}
+                                    />
+                                    <img
+                                        className={styles.languageCaret}
+                                        src={dropdownCaret}
+                                    />
+                                </div>
+                                <LanguageSelector label={this.props.intl.formatMessage(ariaMessages.language)} />
+                            </div>
+                            <div
+                                className={classNames(styles.menuBarItem, styles.hoverable, {
+                                    [styles.active]: this.props.fileMenuOpen
+                                })}
+                                onMouseUp={this.props.onClickFile}
+                            >
+                                <FormattedMessage
+                                    defaultMessage="File"
+                                    description="Text for file dropdown menu"
+                                    id="gui.menuBar.file"
+                                />
+                                <MenuBarMenu
+                                    className={classNames(styles.menuBarMenu)}
+                                    open={this.props.fileMenuOpen}
+                                    place={this.props.isRtl ? 'left' : 'right'}
+                                    onRequestClose={this.props.onRequestCloseFile}
+                                >
                                     <MenuSection>
-                                        {this.props.canSave ? (
-                                            <MenuItem onClick={this.handleClickSave}>
-                                                {saveNowMessage}
-                                            </MenuItem>
-                                        ) : []}
-                                        {this.props.canCreateCopy ? (
-                                            <MenuItem onClick={this.handleClickSaveAsCopy}>
-                                                {createCopyMessage}
-                                            </MenuItem>
-                                        ) : []}
-                                        {this.props.canRemix ? (
-                                            <MenuItem onClick={this.handleClickRemix}>
-                                                {remixMessage}
-                                            </MenuItem>
-                                        ) : []}
+                                        <MenuItem
+                                            isRtl={this.props.isRtl}
+                                            onClick={this.handleClickNew}
+                                        >
+                                            {newProjectMessage}
+                                        </MenuItem>
                                     </MenuSection>
-                                )}
-                                <MenuSection>
-                                    <SBFileUploader
-                                        canSave={this.props.canSave}
-                                        userOwnsProject={this.props.userOwnsProject}
-                                        onUpdateProjectTitle={this.props.onUpdateProjectTitle}
-                                    >
-                                        {(className, renderFileInput, loadProject) => (
+                                    {(this.props.canSave || this.props.canCreateCopy || this.props.canRemix) && (
+                                        <MenuSection>
+                                            {this.props.canSave ? (
+                                                <MenuItem onClick={this.handleClickSave}>
+                                                    {saveNowMessage}
+                                                </MenuItem>
+                                            ) : []}
+                                            {this.props.canCreateCopy ? (
+                                                <MenuItem onClick={this.handleClickSaveAsCopy}>
+                                                    {createCopyMessage}
+                                                </MenuItem>
+                                            ) : []}
+                                            {this.props.canRemix ? (
+                                                <MenuItem onClick={this.handleClickRemix}>
+                                                    {remixMessage}
+                                                </MenuItem>
+                                            ) : []}
+                                        </MenuSection>
+                                    )}
+                                    <MenuSection>
+                                        <SBFileUploader
+                                            canSave={this.props.canSave}
+                                            userOwnsProject={this.props.userOwnsProject}
+                                            onUpdateProjectTitle={this.props.onUpdateProjectTitle}
+                                        >
+                                            {(className, renderFileInput, loadProject) => (
+                                                <MenuItem
+                                                    className={className}
+                                                    onClick={loadProject}
+                                                >
+                                                    {this.props.intl.formatMessage(
+                                                        sharedMessages.loadFromComputerTitle
+                                                    )}
+                                                    {renderFileInput()}
+                                                </MenuItem>
+                                            )}
+                                        </SBFileUploader>
+                                        <SB3Downloader>{(className, downloadProjectCallback) => (
                                             <MenuItem
                                                 className={className}
-                                                onClick={loadProject}
+                                                onClick={this.handleSaveToComputer(downloadProjectCallback)}
                                             >
-                                                {this.props.intl.formatMessage(sharedMessages.loadFromComputerTitle)}
-                                                {renderFileInput()}
+                                                {/* eslint-disable max-len */}
+                                                <FormattedMessage
+                                                    defaultMessage="Save to your computer"
+                                                    description="Menu bar item for downloading a project to your computer"
+                                                    id="gui.menuBar.downloadToComputer"
+                                                />
+                                                {/* eslint-enable max-len */}
                                             </MenuItem>
-                                        )}
-                                    </SBFileUploader>
-                                    <SB3Downloader>{(className, downloadProjectCallback) => (
-                                        <MenuItem
-                                            className={className}
-                                            onClick={this.handleSaveToComputer(downloadProjectCallback)}
-                                        >
-                                            <FormattedMessage
-                                                defaultMessage="Save to your computer"
-                                                description="Menu bar item for downloading a project to your computer"
-                                                id="gui.menuBar.downloadToComputer"
-                                            />
-                                        </MenuItem>
-                                    )}</SB3Downloader>
-                                </MenuSection>
-                            </MenuBarMenu>
-                        </div>
-                        <div
-                            className={classNames(styles.menuBarItem, styles.hoverable, {
-                                [styles.active]: this.props.editMenuOpen
-                            })}
-                            onMouseUp={this.props.onClickEdit}
-                        >
-                            <div className={classNames(styles.editMenu)}>
-                                <FormattedMessage
-                                    defaultMessage="Edit"
-                                    description="Text for edit dropdown menu"
-                                    id="gui.menuBar.edit"
-                                />
+                                        )}</SB3Downloader>
+                                    </MenuSection>
+                                </MenuBarMenu>
                             </div>
-                            <MenuBarMenu
-                                className={classNames(styles.menuBarMenu)}
-                                open={this.props.editMenuOpen}
-                                place={this.props.isRtl ? 'left' : 'right'}
-                                onRequestClose={this.props.onRequestCloseEdit}
+                            <div
+                                className={classNames(styles.menuBarItem, styles.hoverable, {
+                                    [styles.active]: this.props.editMenuOpen
+                                })}
+                                onMouseUp={this.props.onClickEdit}
                             >
-                                <DeletionRestorer>{(handleRestore, {restorable, deletedItem}) => (
-                                    <MenuItem
-                                        className={classNames({[styles.disabled]: !restorable})}
-                                        onClick={this.handleRestoreOption(handleRestore)}
-                                    >
-                                        {this.restoreOptionMessage(deletedItem)}
-                                    </MenuItem>
-                                )}</DeletionRestorer>
-                                <MenuSection>
-                                    <TurboMode>{(toggleTurboMode, {turboMode}) => (
-                                        <MenuItem onClick={toggleTurboMode}>
-                                            {turboMode ? (
-                                                <FormattedMessage
-                                                    defaultMessage="Turn off Turbo Mode"
-                                                    description="Menu bar item for turning off turbo mode"
-                                                    id="gui.menuBar.turboModeOff"
-                                                />
-                                            ) : (
-                                                <FormattedMessage
-                                                    defaultMessage="Turn on Turbo Mode"
-                                                    description="Menu bar item for turning on turbo mode"
-                                                    id="gui.menuBar.turboModeOn"
-                                                />
-                                            )}
+                                <div className={classNames(styles.editMenu)}>
+                                    <FormattedMessage
+                                        defaultMessage="Edit"
+                                        description="Text for edit dropdown menu"
+                                        id="gui.menuBar.edit"
+                                    />
+                                </div>
+                                <MenuBarMenu
+                                    className={classNames(styles.menuBarMenu)}
+                                    open={this.props.editMenuOpen}
+                                    place={this.props.isRtl ? 'left' : 'right'}
+                                    onRequestClose={this.props.onRequestCloseEdit}
+                                >
+                                    <DeletionRestorer>{(handleRestore, {restorable, deletedItem}) => (
+                                        <MenuItem
+                                            className={classNames({[styles.disabled]: !restorable})}
+                                            onClick={this.handleRestoreOption(handleRestore)}
+                                        >
+                                            {this.restoreOptionMessage(deletedItem)}
                                         </MenuItem>
-                                    )}</TurboMode>
-                                </MenuSection>
-                            </MenuBarMenu>
-                        </div>
-                    </div>
-                    <Divider className={classNames(styles.divider)} />
-                    <div
-                        aria-label={this.props.intl.formatMessage(ariaMessages.tutorials)}
-                        className={classNames(styles.menuBarItem, styles.hoverable)}
-                        onClick={this.props.onOpenTipLibrary}
-                    >
-                        <img
-                            className={styles.helpIcon}
-                            src={helpIcon}
-                        />
-                        <FormattedMessage {...ariaMessages.tutorials} />
-                    </div>
-                    <Divider className={classNames(styles.divider)} />
-                    {this.props.canEditTitle ? (
-                        <div className={classNames(styles.menuBarItem, styles.growable)}>
-                            <MenuBarItemTooltip
-                                enable
-                                id="title-field"
-                            >
-                                <ProjectTitleInput
-                                    className={classNames(styles.titleFieldGrowable)}
-                                    onUpdateProjectTitle={this.props.onUpdateProjectTitle}
-                                />
-                            </MenuBarItemTooltip>
-                        </div>
-                    ) : ((this.props.authorUsername && this.props.authorUsername !== this.props.username) ? (
-                        <AuthorInfo
-                            className={styles.authorInfo}
-                            imageUrl={this.props.authorThumbnailUrl}
-                            projectTitle={this.props.projectTitle}
-                            userId={this.props.authorId}
-                            username={this.props.authorUsername}
-                        />
-                    ) : null)}
-                    <div className={classNames(styles.menuBarItem)}>
-                        {this.props.canShare ? (
-                            (this.props.isShowingProject || this.props.isUpdating) && (
-                                <ProjectWatcher onDoneUpdating={this.props.onSeeCommunity}>
-                                    {
-                                        waitForUpdate => (
-                                            <ShareButton
-                                                className={styles.menuBarButton}
-                                                isShared={this.props.isShared}
-                                                /* eslint-disable react/jsx-no-bind */
-                                                onClick={() => {
-                                                    this.handleClickShare(waitForUpdate);
-                                                }}
-                                                /* eslint-enable react/jsx-no-bind */
+                                    )}</DeletionRestorer>
+                                    <MenuSection>
+                                        <TurboMode>{(toggleTurboMode, {turboMode}) => (
+                                            <MenuItem onClick={toggleTurboMode}>
+                                                {turboMode ? (
+                                                    <FormattedMessage
+                                                        defaultMessage="Turn off Turbo Mode"
+                                                        description="Menu bar item for turning off turbo mode"
+                                                        id="gui.menuBar.turboModeOff"
+                                                    />
+                                                ) : (
+                                                    <FormattedMessage
+                                                        defaultMessage="Turn on Turbo Mode"
+                                                        description="Menu bar item for turning on turbo mode"
+                                                        id="gui.menuBar.turboModeOn"
+                                                    />
+                                                )}
+                                            </MenuItem>
+                                        )}</TurboMode>
+                                    </MenuSection>
+                                    <MenuSection>
+                                        <MenuItem onClick={this.handleRecordStage}>
+                                            <FormattedMessage
+                                                defaultMessage="Record Project Video"
+                                                description="Menu bar item for recording project video"
+                                                id="gui.menuBar.recordProjectVideo"
                                             />
-                                        )
-                                    }
-                                </ProjectWatcher>
-                            )
-                        ) : (
-                            this.props.showComingSoon ? (
-                                <MenuBarItemTooltip id="share-button">
-                                    <ShareButton className={styles.menuBarButton} />
+                                        </MenuItem>
+                                    </MenuSection>
+                                </MenuBarMenu>
+                            </div>
+                        </div>
+                        <Divider className={classNames(styles.divider)} />
+                        <div
+                            aria-label={this.props.intl.formatMessage(ariaMessages.tutorials)}
+                            className={classNames(styles.menuBarItem, styles.hoverable)}
+                            onClick={this.props.onOpenTipLibrary}
+                        >
+                            <img
+                                className={styles.helpIcon}
+                                src={helpIcon}
+                            />
+                            <FormattedMessage {...ariaMessages.tutorials} />
+                        </div>
+                        <Divider className={classNames(styles.divider)} />
+                        {this.props.canEditTitle ? (
+                            <div className={classNames(styles.menuBarItem, styles.growable)}>
+                                <MenuBarItemTooltip
+                                    enable
+                                    id="title-field"
+                                >
+                                    <ProjectTitleInput
+                                        className={classNames(styles.titleFieldGrowable)}
+                                        onUpdateProjectTitle={this.props.onUpdateProjectTitle}
+                                    />
                                 </MenuBarItemTooltip>
-                            ) : []
-                        )}
-                        {this.props.canRemix ? remixButton : []}
+                            </div>
+                        ) : ((this.props.authorUsername && this.props.authorUsername !== this.props.username) ? (
+                            <AuthorInfo
+                                className={styles.authorInfo}
+                                imageUrl={this.props.authorThumbnailUrl}
+                                projectTitle={this.props.projectTitle}
+                                userId={this.props.authorId}
+                                username={this.props.authorUsername}
+                            />
+                        ) : null)}
+                        <div className={classNames(styles.menuBarItem)}>
+                            {this.props.canShare ? (
+                                (this.props.isShowingProject || this.props.isUpdating) && (
+                                    <ProjectWatcher onDoneUpdating={this.props.onSeeCommunity}>
+                                        {
+                                            waitForUpdate => (
+                                                <ShareButton
+                                                    className={styles.menuBarButton}
+                                                    isShared={this.props.isShared}
+                                                    /* eslint-disable react/jsx-no-bind */
+                                                    onClick={() => {
+                                                        this.handleClickShare(waitForUpdate);
+                                                    }}
+                                                    /* eslint-enable react/jsx-no-bind */
+                                                />
+                                            )
+                                        }
+                                    </ProjectWatcher>
+                                )
+                            ) : (
+                                this.props.showComingSoon ? (
+                                    <MenuBarItemTooltip id="share-button">
+                                        <ShareButton className={styles.menuBarButton} />
+                                    </MenuBarItemTooltip>
+                                ) : []
+                            )}
+                            {this.props.canRemix ? remixButton : []}
+                        </div>
+                        <div className={classNames(styles.menuBarItem, styles.communityButtonWrapper)}>
+                            {this.props.enableCommunity ? (
+                                (this.props.isShowingProject || this.props.isUpdating) && (
+                                    <ProjectWatcher onDoneUpdating={this.props.onSeeCommunity}>
+                                        {
+                                            waitForUpdate => (
+                                                <CommunityButton
+                                                    className={styles.menuBarButton}
+                                                    /* eslint-disable react/jsx-no-bind */
+                                                    onClick={() => {
+                                                        this.handleClickSeeCommunity(waitForUpdate);
+                                                    }}
+                                                    /* eslint-enable react/jsx-no-bind */
+                                                />
+                                            )
+                                        }
+                                    </ProjectWatcher>
+                                )
+                            ) : (this.props.showComingSoon ? (
+                                <MenuBarItemTooltip id="community-button">
+                                    <CommunityButton className={styles.menuBarButton} />
+                                </MenuBarItemTooltip>
+                            ) : [])}
+                        </div>
                     </div>
-                    <div className={classNames(styles.menuBarItem, styles.communityButtonWrapper)}>
-                        {this.props.enableCommunity ? (
-                            (this.props.isShowingProject || this.props.isUpdating) && (
-                                <ProjectWatcher onDoneUpdating={this.props.onSeeCommunity}>
-                                    {
-                                        waitForUpdate => (
-                                            <CommunityButton
-                                                className={styles.menuBarButton}
-                                                /* eslint-disable react/jsx-no-bind */
-                                                onClick={() => {
-                                                    this.handleClickSeeCommunity(waitForUpdate);
-                                                }}
-                                                /* eslint-enable react/jsx-no-bind */
-                                            />
-                                        )
-                                    }
-                                </ProjectWatcher>
-                            )
-                        ) : (this.props.showComingSoon ? (
-                            <MenuBarItemTooltip id="community-button">
-                                <CommunityButton className={styles.menuBarButton} />
-                            </MenuBarItemTooltip>
-                        ) : [])}
-                    </div>
-                </div>
 
-                {/* show the proper UI in the account menu, given whether the user is
-                logged in, and whether a session is available to log in with */}
-                <div className={styles.accountInfoGroup}>
-                    <div className={styles.menuBarItem}>
-                        {this.props.canSave && (
-                            <SaveStatus />
-                        )}
-                    </div>
-                    {this.props.sessionExists ? (
-                        this.props.username ? (
-                            // ************ user is logged in ************
-                            <React.Fragment>
-                                <a href="/mystuff/">
-                                    <div
-                                        className={classNames(
-                                            styles.menuBarItem,
-                                            styles.hoverable,
-                                            styles.mystuffButton
-                                        )}
-                                    >
-                                        <img
-                                            className={styles.mystuffIcon}
-                                            src={mystuffIcon}
-                                        />
-                                    </div>
-                                </a>
-                                <AccountNav
-                                    className={classNames(
-                                        styles.menuBarItem,
-                                        styles.hoverable,
-                                        {[styles.active]: this.props.accountMenuOpen}
-                                    )}
-                                    isOpen={this.props.accountMenuOpen}
-                                    isRtl={this.props.isRtl}
-                                    menuBarMenuClassName={classNames(styles.menuBarMenu)}
-                                    onClick={this.props.onClickAccount}
-                                    onClose={this.props.onRequestCloseAccount}
-                                    onLogOut={this.props.onLogOut}
-                                />
-                            </React.Fragment>
-                        ) : (
-                            // ********* user not logged in, but a session exists
-                            // ********* so they can choose to log in
-                            <React.Fragment>
-                                <div
-                                    className={classNames(
-                                        styles.menuBarItem,
-                                        styles.hoverable
-                                    )}
-                                    key="join"
-                                    onMouseUp={this.props.onOpenRegistration}
-                                >
-                                    <FormattedMessage
-                                        defaultMessage="Join Scratch"
-                                        description="Link for creating a Scratch account"
-                                        id="gui.menuBar.joinScratch"
-                                    />
-                                </div>
-                                <div
-                                    className={classNames(
-                                        styles.menuBarItem,
-                                        styles.hoverable
-                                    )}
-                                    key="login"
-                                    onMouseUp={this.props.onClickLogin}
-                                >
-                                    <FormattedMessage
-                                        defaultMessage="Sign in"
-                                        description="Link for signing in to your Scratch account"
-                                        id="gui.menuBar.signIn"
-                                    />
-                                    <LoginDropdown
-                                        className={classNames(styles.menuBarMenu)}
-                                        isOpen={this.props.loginMenuOpen}
-                                        isRtl={this.props.isRtl}
-                                        renderLogin={this.props.renderLogin}
-                                        onClose={this.props.onRequestCloseLogin}
-                                    />
-                                </div>
-                            </React.Fragment>
-                        )
-                    ) : (
-                        // ******** no login session is available, so don't show login stuff
-                        <React.Fragment>
-                            {this.props.showComingSoon ? (
+                    {/* show the proper UI in the account menu, given whether the user is
+                    logged in, and whether a session is available to log in with */}
+                    <div className={styles.accountInfoGroup}>
+                        <div className={styles.menuBarItem}>
+                            {this.props.canSave && (
+                                <SaveStatus />
+                            )}
+                        </div>
+                        {this.props.sessionExists ? (
+                            this.props.username ? (
+                                // ************ user is logged in ************
                                 <React.Fragment>
-                                    <MenuBarItemTooltip id="mystuff">
+                                    <a href="/mystuff/">
                                         <div
                                             className={classNames(
                                                 styles.menuBarItem,
@@ -657,37 +606,115 @@ class MenuBar extends React.Component {
                                                 src={mystuffIcon}
                                             />
                                         </div>
-                                    </MenuBarItemTooltip>
-                                    <MenuBarItemTooltip
-                                        id="account-nav"
-                                        place={this.props.isRtl ? 'right' : 'left'}
-                                    >
-                                        <div
-                                            className={classNames(
-                                                styles.menuBarItem,
-                                                styles.hoverable,
-                                                styles.accountNavMenu
-                                            )}
-                                        >
-                                            <img
-                                                className={styles.profileIcon}
-                                                src={profileIcon}
-                                            />
-                                            <span>
-                                                {'scratch-cat'}
-                                            </span>
-                                            <img
-                                                className={styles.dropdownCaretIcon}
-                                                src={dropdownCaret}
-                                            />
-                                        </div>
-                                    </MenuBarItemTooltip>
+                                    </a>
+                                    <AccountNav
+                                        className={classNames(
+                                            styles.menuBarItem,
+                                            styles.hoverable,
+                                            {[styles.active]: this.props.accountMenuOpen}
+                                        )}
+                                        isOpen={this.props.accountMenuOpen}
+                                        isRtl={this.props.isRtl}
+                                        menuBarMenuClassName={classNames(styles.menuBarMenu)}
+                                        onClick={this.props.onClickAccount}
+                                        onClose={this.props.onRequestCloseAccount}
+                                        onLogOut={this.props.onLogOut}
+                                    />
                                 </React.Fragment>
-                            ) : []}
-                        </React.Fragment>
-                    )}
-                </div>
-            </Box>
+                            ) : (
+                                // ********* user not logged in, but a session exists
+                                // ********* so they can choose to log in
+                                <React.Fragment>
+                                    <div
+                                        className={classNames(
+                                            styles.menuBarItem,
+                                            styles.hoverable
+                                        )}
+                                        key="join"
+                                        onMouseUp={this.props.onOpenRegistration}
+                                    >
+                                        <FormattedMessage
+                                            defaultMessage="Join Scratch"
+                                            description="Link for creating a Scratch account"
+                                            id="gui.menuBar.joinScratch"
+                                        />
+                                    </div>
+                                    <div
+                                        className={classNames(
+                                            styles.menuBarItem,
+                                            styles.hoverable
+                                        )}
+                                        key="login"
+                                        onMouseUp={this.props.onClickLogin}
+                                    >
+                                        <FormattedMessage
+                                            defaultMessage="Sign in"
+                                            description="Link for signing in to your Scratch account"
+                                            id="gui.menuBar.signIn"
+                                        />
+                                        <LoginDropdown
+                                            className={classNames(styles.menuBarMenu)}
+                                            isOpen={this.props.loginMenuOpen}
+                                            isRtl={this.props.isRtl}
+                                            renderLogin={this.props.renderLogin}
+                                            onClose={this.props.onRequestCloseLogin}
+                                        />
+                                    </div>
+                                </React.Fragment>
+                            )
+                        ) : (
+                            // ******** no login session is available, so don't show login stuff
+                            <React.Fragment>
+                                {this.props.showComingSoon ? (
+                                    <React.Fragment>
+                                        <MenuBarItemTooltip id="mystuff">
+                                            <div
+                                                className={classNames(
+                                                    styles.menuBarItem,
+                                                    styles.hoverable,
+                                                    styles.mystuffButton
+                                                )}
+                                            >
+                                                <img
+                                                    className={styles.mystuffIcon}
+                                                    src={mystuffIcon}
+                                                />
+                                            </div>
+                                        </MenuBarItemTooltip>
+                                        <MenuBarItemTooltip
+                                            id="account-nav"
+                                            place={this.props.isRtl ? 'right' : 'left'}
+                                        >
+                                            <div
+                                                className={classNames(
+                                                    styles.menuBarItem,
+                                                    styles.hoverable,
+                                                    styles.accountNavMenu
+                                                )}
+                                            >
+                                                <img
+                                                    className={styles.profileIcon}
+                                                    src={profileIcon}
+                                                />
+                                                <span>
+                                                    {'scratch-cat'}
+                                                </span>
+                                                <img
+                                                    className={styles.dropdownCaretIcon}
+                                                    src={dropdownCaret}
+                                                />
+                                            </div>
+                                        </MenuBarItemTooltip>
+                                    </React.Fragment>
+                                ) : []}
+                            </React.Fragment>
+                        )}
+                    </div>
+                </Box>
+                {this.props.recordModalOpen && (
+                    <RecordStage onHide={this.props.onRequestCloseRecordModal} />
+                )}
+            </React.Fragment>
         );
     }
 }
@@ -728,6 +755,7 @@ MenuBar.propTypes = {
     onClickSave: PropTypes.func,
     onClickSaveAsCopy: PropTypes.func,
     onLogOut: PropTypes.func,
+    onOpenRecordModal: PropTypes.func,
     onOpenRegistration: PropTypes.func,
     onOpenTipLibrary: PropTypes.func,
     onProjectTelemetryEvent: PropTypes.func,
@@ -736,11 +764,13 @@ MenuBar.propTypes = {
     onRequestCloseFile: PropTypes.func,
     onRequestCloseLanguage: PropTypes.func,
     onRequestCloseLogin: PropTypes.func,
+    onRequestCloseRecordModal: PropTypes.func,
     onSeeCommunity: PropTypes.func,
     onShare: PropTypes.func,
     onToggleLoginOpen: PropTypes.func,
     onUpdateProjectTitle: PropTypes.func,
     projectTitle: PropTypes.string,
+    recordModalOpen: PropTypes.bool,
     renderLogin: PropTypes.func,
     sessionExists: PropTypes.bool,
     shouldSaveBeforeTransition: PropTypes.func,
@@ -768,6 +798,7 @@ const mapStateToProps = (state, ownProps) => {
         locale: state.locales.locale,
         loginMenuOpen: loginMenuOpen(state),
         projectTitle: state.scratchGui.projectTitle,
+        recordModalOpen: recordModalOpen(state),
         sessionExists: state.session && typeof state.session.session !== 'undefined',
         username: user ? user.username : null,
         userOwnsProject: ownProps.authorUsername && user &&
@@ -793,7 +824,9 @@ const mapDispatchToProps = dispatch => ({
     onClickRemix: () => dispatch(remixProject()),
     onClickSave: () => dispatch(manualUpdateProject()),
     onClickSaveAsCopy: () => dispatch(saveProjectAsCopy()),
-    onSeeCommunity: () => dispatch(setPlayer(true))
+    onSeeCommunity: () => dispatch(setPlayer(true)),
+    onOpenRecordModal: () => dispatch(openRecordModal()),
+    onRequestCloseRecordModal: () => dispatch(closeRecordModal())
 });
 
 export default compose(
